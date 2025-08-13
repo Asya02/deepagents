@@ -1,12 +1,14 @@
-from deepagents.sub_agent import _create_task_tool, SubAgent
-from deepagents.model import get_default_model
-from deepagents.tools import write_todos, write_file, read_file, ls, edit_file
-from deepagents.state import DeepAgentState
-from typing import Sequence, Union, Callable, Any, TypeVar, Type, Optional
-from langchain_core.tools import BaseTool
-from langchain_core.language_models import LanguageModelLike
+from typing import Any, Callable, Optional, Sequence, Type, TypeVar, Union
 
+from langchain_core.language_models import LanguageModelLike
+from langchain_core.tools import BaseTool
 from langgraph.prebuilt import create_react_agent
+
+from deepagents.model import get_default_model
+from deepagents.state import DeepAgentState
+from deepagents.sub_agent import SubAgent, _create_task_tool
+from deepagents.tools import edit_file, ls, read_file, write_file, write_todos
+from deepagents.utils import create_custom_react_agent
 
 StateSchema = TypeVar("StateSchema", bound=DeepAgentState)
 StateSchemaType = Type[StateSchema]
@@ -62,7 +64,8 @@ def create_deep_agent(
         state_schema
     )
     all_tools = built_in_tools + list(tools) + [task_tool]
-    return create_react_agent(
+    # return create_react_agent(
+    return create_custom_react_agent(
         model,
         prompt=prompt,
         tools=all_tools,

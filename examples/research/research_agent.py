@@ -159,7 +159,10 @@ You have access to a few tools.
 Use this to run an internet search for a given query. You can specify the number of results, the topic, and whether raw content should be included.
 """
 
-llm = GigaChat(verify_ssl_certs=False)
+llm = GigaChat(
+    verify_ssl_certs=False,
+    model="GigaChat-2-Max",
+    )
 
 # Create the agent
 agent = create_deep_agent(

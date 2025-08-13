@@ -1,14 +1,13 @@
-from deepagents.prompts import TASK_DESCRIPTION_PREFIX, TASK_DESCRIPTION_SUFFIX
-from deepagents.state import DeepAgentState
-from langgraph.prebuilt import create_react_agent
-from langchain_core.tools import BaseTool
-from typing import TypedDict
-from langchain_core.tools import tool, InjectedToolCallId
+from typing import Annotated, NotRequired, TypedDict
+
 from langchain_core.messages import ToolMessage
-from typing import Annotated, NotRequired
+from langchain_core.tools import BaseTool, InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState, create_react_agent
 from langgraph.types import Command
 
-from langgraph.prebuilt import InjectedState
+from deepagents.prompts import TASK_DESCRIPTION_PREFIX, TASK_DESCRIPTION_SUFFIX
+from deepagents.state import DeepAgentState
+from deepagents.utils import create_custom_react_agent
 
 
 class SubAgent(TypedDict):
@@ -20,7 +19,8 @@ class SubAgent(TypedDict):
 
 def _create_task_tool(tools, instructions, subagents: list[SubAgent], model, state_schema):
     agents = {
-        "general-purpose": create_react_agent(model, prompt=instructions, tools=tools)
+        # "general-purpose": create_react_agent(model, prompt=instructions, tools=tools)
+        "general-purpose": create_custom_react_agent(model, prompt=instructions, tools=tools)
     }
     tools_by_name = {}
     for tool_ in tools:

@@ -1,21 +1,33 @@
-from typing import Annotated, TypedDict
+from typing import Annotated, NotRequired, Sequence, TypedDict
 
 from dotenv import find_dotenv, load_dotenv
+from langchain_core.messages import BaseMessage
 from langchain_gigachat import GigaChat
 from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
+from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import ToolNode, tools_condition
 from pydantic import BaseModel, Field
 
 load_dotenv(find_dotenv())
 
 
-def create_custom_react_agent(model, prompt, tools, state_schema):
+class AgentState(TypedDict):
+    """The state of the agent."""
+
+    messages: Annotated[Sequence[BaseMessage], add_messages]
+
+    remaining_steps: NotRequired[RemainingSteps]
+
+
+def create_custom_react_agent(model, prompt, tools, state_schema=AgentState, additional_fields=None):
     """Create a custom react agent."""
 
-    graph_builder = StateGraph(state_schema)
+    graph_builder = StateGraph(
+        state_schema=state_schema or AgentState
+    )
 
-    llm_with_tools = model.bind_tools(tools)
+    llm_with_tools = model.bind_tools(tools, additional_fields=additional_fields)
     tool_node = ToolNode(tools=tools)
 
     def chatbot(state):
