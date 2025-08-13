@@ -9,6 +9,7 @@ dependencies = [
     "langgraph>=0.2.6",
     "langchain-anthropic>=0.1.23",
     "langchain>=0.2.14",
+    "e2b-code-interpreter>=1.5.2",
 ]
 
 

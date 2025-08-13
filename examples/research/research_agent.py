@@ -1,11 +1,13 @@
 import os
 from typing import Literal
 
+from dotenv import find_dotenv, load_dotenv
+from langchain_gigachat import GigaChat
 from tavily import TavilyClient
 
+from deepagents import SubAgent, create_deep_agent
 
-from deepagents import create_deep_agent, SubAgent
-
+load_dotenv(find_dotenv())
 
 # Search tool to use to do research
 def internet_search(
@@ -157,9 +159,23 @@ You have access to a few tools.
 Use this to run an internet search for a given query. You can specify the number of results, the topic, and whether raw content should be included.
 """
 
+llm = GigaChat(verify_ssl_certs=False)
+
 # Create the agent
 agent = create_deep_agent(
     [internet_search],
     research_instructions,
+    model=llm,
     subagents=[critique_sub_agent, research_sub_agent],
-).with_config({"recursion_limit": 1000})
+).with_config({"recursion_limit": 50})
+
+
+result = agent.invoke({
+    "messages": [{
+        "role": "user",
+        # "content": "Проведи исследование и ответь на вопрос: Чем отличаются архитектуры трансформеров и RNN?"
+        "content": "Проведи исследование и ответь на вопрос: Чем LangChain отличается от GigaChain"
+        }],
+    # "files": {"reserch.txt": "final_research"}
+    })
+print(result)
