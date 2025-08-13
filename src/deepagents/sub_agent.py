@@ -1,6 +1,7 @@
 from typing import Annotated, NotRequired, TypedDict
 
 from langchain_core.messages import ToolMessage
+from langchain_core.runnables import Runnable
 from langchain_core.tools import BaseTool, InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState, create_react_agent
 from langgraph.types import Command
@@ -15,11 +16,15 @@ class SubAgent(TypedDict):
     description: str
     prompt: str
     tools: NotRequired[list[str]]
+    graph: NotRequired[Runnable]
 
 
-def _create_task_tool(tools, instructions, subagents: list[SubAgent], model, state_schema):
+def _create_task_tool(tools,
+                      instructions,
+                      subagents: list[SubAgent],
+                      model,
+                      state_schema):
     agents = {
-        # "general-purpose": create_react_agent(model, prompt=instructions, tools=tools)
         "general-purpose": create_custom_react_agent(model, prompt=instructions, tools=tools)
     }
     tools_by_name = {}
@@ -32,9 +37,12 @@ def _create_task_tool(tools, instructions, subagents: list[SubAgent], model, sta
             _tools = [tools_by_name[t] for t in _agent["tools"]]
         else:
             _tools = tools
-        agents[_agent["name"]] = create_react_agent(
-            model, prompt=_agent["prompt"], tools=_tools, state_schema=state_schema
-        )
+        if "graph" in _agent:
+            agents[_agent["name"]] = _agent["graph"]
+        else:
+            agents[_agent["name"]] = create_custom_react_agent(
+                model, prompt=_agent["prompt"], tools=_tools, state_schema=state_schema
+            )
 
     other_agents_string = [
         f"- {_agent['name']}: {_agent['description']}" for _agent in subagents

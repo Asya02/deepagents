@@ -6,8 +6,14 @@ from langchain_gigachat import GigaChat
 from tavily import TavilyClient
 
 from deepagents import SubAgent, create_deep_agent
+from deepagents.utils import create_custom_react_agent
 
 load_dotenv(find_dotenv())
+
+llm = GigaChat(
+    verify_ssl_certs=False,
+    model="GigaChat-2-Max",
+    )
 
 # Search tool to use to do research
 def internet_search(
@@ -37,7 +43,8 @@ research_sub_agent = {
     "name": "research-agent",
     "description": "Used to research more in depth questions. Only give this researcher one topic at a time. Do not pass multiple sub questions to this researcher. Instead, you should break down a large topic into the necessary components, and then call multiple research agents in parallel, one for each sub question.",
     "prompt": sub_research_prompt,
-    "tools": ["internet_search"]
+    "tools": ["internet_search"],
+    "graph": create_custom_react_agent(model=llm, prompt=sub_research_prompt, tools=[internet_search])
 }
 
 sub_critique_prompt = """You are a dedicated editor. You are being tasked to critique a report.
@@ -159,10 +166,7 @@ You have access to a few tools.
 Use this to run an internet search for a given query. You can specify the number of results, the topic, and whether raw content should be included.
 """
 
-llm = GigaChat(
-    verify_ssl_certs=False,
-    model="GigaChat-2-Max",
-    )
+
 
 # Create the agent
 agent = create_deep_agent(
