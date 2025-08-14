@@ -1,8 +1,10 @@
 import os
 from typing import Literal
 
+import pandas as pd
 from dotenv import find_dotenv, load_dotenv
 from langchain_gigachat import GigaChat
+from repl import run_repl_graph
 from tavily import TavilyClient
 
 from deepagents import SubAgent, create_deep_agent
@@ -14,6 +16,7 @@ llm = GigaChat(
     verify_ssl_certs=False,
     model="GigaChat-2-Max",
     )
+
 
 # Search tool to use to do research
 def internet_search(
@@ -87,6 +90,7 @@ When you think you enough information to write a final report, write it to `fina
 
 You can call the critique-agent to get a critique of the final report. After that (if needed) you can do more research and edit the `final_report.md`
 You can do this however many times you want until are you satisfied with the result.
+You also have access to repl-agent to run python code to use some api for example.
 
 Only edit the file once at a time (if you call this tool in parallel, there may be conflicts).
 
@@ -166,6 +170,12 @@ You have access to a few tools.
 Use this to run an internet search for a given query. You can specify the number of results, the topic, and whether raw content should be included.
 """
 
+repl_sub_agent = {
+    "name": "repl-agent",
+    "description": "Used to run python code.",
+    "prompt": "",
+    "graph": run_repl_graph
+}
 
 
 # Create the agent
@@ -173,16 +183,19 @@ agent = create_deep_agent(
     [internet_search],
     research_instructions,
     model=llm,
-    subagents=[critique_sub_agent, research_sub_agent],
+    subagents=[critique_sub_agent, research_sub_agent, repl_sub_agent],
 ).with_config({"recursion_limit": 50})
 
 
-result = agent.invoke({
-    "messages": [{
-        "role": "user",
-        # "content": "Проведи исследование и ответь на вопрос: Чем отличаются архитектуры трансформеров и RNN?"
-        "content": "Проведи исследование и ответь на вопрос: Чем LangChain отличается от GigaChain"
-        }],
-    # "files": {"reserch.txt": "final_research"}
-    })
-print(result)
+if __name__ == "__main__":
+    df = pd.read_excel(r"C:\Users\Anastasia\projects\deepagents\examples\research\sales.xlsx")
+    result = agent.invoke({
+        "messages": [{
+            "role": "user",
+            # "content": "Проведи исследование и ответь на вопрос: Чем отличаются архитектуры трансформеров и RNN?"
+            # "content": "Проведи исследование и ответь на вопрос: Чем LangChain отличается от GigaChain"
+            "content": "С помощью файла sales.xlsx сделай график среднего чека за год, затем напиши подробный отчет"
+            }],
+        "files": {"sales.xlsx": df}
+        })
+    print(result)
