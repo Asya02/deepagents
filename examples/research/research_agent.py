@@ -47,7 +47,6 @@ research_sub_agent = {
     "description": "Used to research more in depth questions. Only give this researcher one topic at a time. Do not pass multiple sub questions to this researcher. Instead, you should break down a large topic into the necessary components, and then call multiple research agents in parallel, one for each sub question.",
     "prompt": sub_research_prompt,
     "tools": ["internet_search"],
-    "graph": create_custom_react_agent(model=llm, prompt=sub_research_prompt, tools=[internet_search])
 }
 
 sub_critique_prompt = """You are a dedicated editor. You are being tasked to critique a report.
@@ -90,7 +89,7 @@ When you think you enough information to write a final report, write it to `fina
 
 You can call the critique-agent to get a critique of the final report. After that (if needed) you can do more research and edit the `final_report.md`
 You can do this however many times you want until are you satisfied with the result.
-You also have access to repl-agent to run python code to use some api for example.
+You also have access to repl-agent to run python code to use some api for example. Call this agent if you need to do some statistical analysis or calculate something.
 
 Only edit the file once at a time (if you call this tool in parallel, there may be conflicts).
 
@@ -188,14 +187,15 @@ agent = create_deep_agent(
 
 
 if __name__ == "__main__":
-    df = pd.read_excel(r"C:\Users\Anastasia\projects\deepagents\examples\research\sales.xlsx")
+    # df = pd.read_excel(r"sales.xlsx")
     result = agent.invoke({
         "messages": [{
             "role": "user",
             # "content": "Проведи исследование и ответь на вопрос: Чем отличаются архитектуры трансформеров и RNN?"
             # "content": "Проведи исследование и ответь на вопрос: Чем LangChain отличается от GigaChain"
-            "content": "С помощью файла sales.xlsx сделай график среднего чека за год, затем напиши подробный отчет"
+            # "content": "С помощью файла sales.xlsx сделай график среднего чека за год, затем напиши подробный отчет"
+            "content": "Какие слова чаще всего встречаются в заголовках новостей о криптовалютах за последний месяц?"
             }],
-        "files": {"sales.xlsx": df}
+        # "files": {"sales.xlsx": df}
         })
     print(result)
