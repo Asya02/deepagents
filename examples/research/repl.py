@@ -14,6 +14,7 @@ llm = GigaChat(
     model="GigaChat-2-Max",
     profanity_check=False,
     top_p=0,
+    timeout=600,
 )
 
 CODE_PROMPT = ChatPromptTemplate.from_messages([

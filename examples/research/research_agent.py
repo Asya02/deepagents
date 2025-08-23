@@ -1,21 +1,24 @@
 import os
 from typing import Literal
 
-import pandas as pd
 from dotenv import find_dotenv, load_dotenv
 from langchain_gigachat import GigaChat
 from repl import run_repl_graph
 from tavily import TavilyClient
 
-from deepagents import SubAgent, create_deep_agent
-from deepagents.utils import create_custom_react_agent
+from deepagents import create_deep_agent
 
 load_dotenv(find_dotenv())
 
 llm = GigaChat(
     verify_ssl_certs=False,
     model="GigaChat-2-Max",
+    timeout=600,
     )
+
+
+# It's best practice to initialize the client once and reuse it.
+tavily_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
 
 
 # Search tool to use to do research
@@ -26,8 +29,7 @@ def internet_search(
     include_raw_content: bool = False,
 ):
     """Run a web search"""
-    tavily_async_client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-    search_docs = tavily_async_client.search(
+    search_docs = tavily_client.search(
         query,
         max_results=max_results,
         include_raw_content=include_raw_content,

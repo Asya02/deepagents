@@ -6,7 +6,7 @@ from langchain_gigachat import GigaChat
 from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.managed import RemainingSteps
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import ToolNode, create_react_agent, tools_condition
 from pydantic import BaseModel, Field
 
 load_dotenv(find_dotenv())
@@ -48,7 +48,7 @@ def create_custom_react_agent(model, prompt, tools, state_schema=AgentState, add
 
 
 if __name__ == "__main__":
-    model = GigaChat(model="GigaChat-2-Max", verify_ssl_certs=False, profanity_check=False)
+    model = GigaChat(model="GigaChat-2-Max", verify_ssl_certs=False, profanity_check=False, timeout=600)
     prompt = "ты полезный ассистент"
 
     class think(BaseModel):
@@ -62,6 +62,6 @@ if __name__ == "__main__":
 
     state_schema = State
 
-    agent = create_custom_react_agent(model, prompt, tools, state_schema)
+    agent = create_react_agent(model, prompt, tools, state_schema)
     inputs = {"messages": [("user", "Сколько будет 39204872685291*6943520757")]}
     print(agent.invoke(inputs))

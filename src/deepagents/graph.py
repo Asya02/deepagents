@@ -3,7 +3,9 @@ from typing import Any, Callable, Optional, Sequence, Type, TypeVar, Union
 from langchain_core.language_models import LanguageModelLike
 from langchain_core.tools import BaseTool
 from langgraph.prebuilt import create_react_agent
+from langgraph.types import Checkpointer
 
+from deepagents.interrupt import ToolInterruptConfig, create_interrupt_hook
 from deepagents.model import get_default_model
 from deepagents.state import DeepAgentState
 from deepagents.sub_agent import SubAgent, _create_task_tool
@@ -32,6 +34,10 @@ def create_deep_agent(
     model: Optional[Union[str, LanguageModelLike]] = None,
     subagents: list[SubAgent] = None,
     state_schema: Optional[StateSchemaType] = None,
+    interrupt_config: Optional[ToolInterruptConfig] = None,
+    config_schema: Optional[Type[Any]] = None,
+    checkpointer: Optional[Checkpointer] = None,
+    post_model_hook: Optional[Callable] = None,
 ):
     """Create a deep agent.
 
@@ -50,7 +56,12 @@ def create_deep_agent(
                 - `prompt` (used as the system prompt in the subagent)
                 - (optional) `tools`
         state_schema: The schema of the deep agent. Should subclass from DeepAgentState
+        interrupt_config: Optional Dict[str, HumanInterruptConfig] mapping tool names to interrupt configs.
+
+        config_schema: The schema of the deep agent.
+        checkpointer: Optional checkpointer for persisting agent state between runs.
     """
+    
     prompt = instructions + base_prompt
     built_in_tools = [write_todos, write_file, read_file, ls, edit_file]
     if model is None:
@@ -64,10 +75,26 @@ def create_deep_agent(
         state_schema
     )
     all_tools = built_in_tools + list(tools) + [task_tool]
-    # return create_react_agent(
-    return create_custom_react_agent(
+    
+    # Should never be the case that both are specified
+    if post_model_hook and interrupt_config:
+        raise ValueError(
+            "Cannot specify both post_model_hook and interrupt_config together. "
+            "Use either interrupt_config for tool interrupts or post_model_hook for custom post-processing."
+        )
+    elif post_model_hook is not None:
+        selected_post_model_hook = post_model_hook
+    elif interrupt_config is not None:
+        selected_post_model_hook = create_interrupt_hook(interrupt_config)
+    else:
+        selected_post_model_hook = None
+    
+    return create_react_agent(
         model,
         prompt=prompt,
         tools=all_tools,
         state_schema=state_schema,
+        post_model_hook=selected_post_model_hook,
+        config_schema=config_schema,
+        checkpointer=checkpointer,
     )
